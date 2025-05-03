@@ -1,0 +1,87 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Result</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style> select {
+        padding: 10px;
+        margin-top: 20px;
+        font-size: 16px;
+        border-radius: 5px;
+    }</style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Predicted Emotion: {{ emotion }}</h1>
+        <img src="{% static 'uploaded_image.jpg' %}" alt="Image">
+
+        <h1>Emotion Label: {{ label }}</h1>
+        <a href="/">Upload another image</a>
+        <br>
+        <h2>Recommended Songs:</h2>
+
+        <!-- Dropdown for filtering -->
+        <select id="language-filter">
+            <option value="all">All</option>
+            <option value="telugu">Telugu</option>
+            <option value="tamil">Tamil</option>
+            <option value="english">English</option>
+        </select>
+
+        <div class="song-list" id="song-list">
+            {% for song_id in song_links %}
+            <iframe style="border-radius:20px; margin-bottom: 10px;" 
+                src="https://open.spotify.com/embed/track/{{ song_id }}?utm_source=generator&autoplay=1" 
+                width="900"
+                height="180" 
+                frameBorder="0" 
+                allowfullscreen="" 
+                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+                loading="lazy">
+            </iframe>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#language-filter').on('change', function() {
+                const selectedLanguage = $(this).val();
+                const detectedEmotion = "{{ emotion }}"; // Pass emotion from Django context
+    
+                // Make an AJAX request to filter songs
+                $.ajax({
+                    url: "{% url 'filter_songs' %}",  
+                    data: { language: selectedLanguage, mood: detectedEmotion },  // Send both language and mood
+                    success: function(response) {
+                        $('#song-list').empty(); // Clear the current song list
+    
+                        // Append the filtered songs
+                        response.song_links.forEach(function(songId) {
+                            $('#song-list').append(`
+                                <iframe style="border-radius:20px; margin-bottom: 10px;" 
+                                    src="https://open.spotify.com/embed/track/${songId}?utm_source=generator&autoplay=1" 
+                                    width="900"
+                                    height="180" 
+                                    frameBorder="0" 
+                                    allowfullscreen="" 
+                                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+                                    loading="lazy">
+                                </iframe>
+                            `);
+                        });
+                    },
+                    error: function() {
+                        alert('Error filtering songs.');
+                    }
+                });
+            });
+        });
+    </script>
+    
+</body>
+</html>
